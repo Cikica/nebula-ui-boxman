@@ -41,9 +41,10 @@ define({
 			})
 		}
 		return {
-			changes  : changes,
-			node     : node,
-			append   : function (to) {
+			changes   : changes,
+			node      : node,
+			transitor : true,
+			append    : function (to) {
 				return to.appendChild(node)
 			},
 		}
@@ -54,11 +55,12 @@ define({
 		if ( nodes.start_at >= nodes.from.length ) {
 			return nodes.into
 		} else {
-			var new_make
-			console.log( nodes.from[nodes.start_at] )
-			new_make        = this.make_node(nodes.from[nodes.start_at])
+			var new_make, node_definition
+			node_definition = nodes.from[nodes.start_at]
+			new_make        = ( node_definition.transitor ? node_definition : this.make_node( node_definition ) )
 			nodes.into      = nodes.into.concat(new_make)
 			nodes.start_at += 1
+			// console.log( new_make )
 			new_make.append( nodes.for )
 			return this.make_multiple_nodes(nodes)
 		}
