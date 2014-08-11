@@ -3,139 +3,228 @@ define({
 	define : {
 		require : [
 			"morphism",
-			"node_maker",
-			"dropdown"
+			"event_master",
+			"dropdown",
+			"scribe",
+			"transistor"
 		],
 		allow : "*"
 	},
 
 	make : function ( define ) {
-		var body, self
-		self = this
-		body = this.library.node_maker.make_node({
-			type      : "div",
-			attribute : { 
-				"class" : "package_call_logger_box_wrap"
-			},
-			children : [
+		var body, self, event_circle
+		self         = this
+		body         = this.library.transistor.make({
+			"class"    : "package_main_softscreen_wrap",
+			"position" : "fixed",
+			"top"      : "0px",
+			"z-index"  : "999",
+			child      : [
 				{
-					type      : "div",
-					attribute : { 
-						"class" : "package_call_logger_box_title"
-					},
-					property : { 
-						textContent : define.title
-					}
-				},
-				{
-					type      : "div",
-					attribute : { 
-						"class" : "package_call_logger_box_body"
-					},
-					children : this.library.morphism.index_loop({
-						array   : define.part,
-						else_do : function ( loop ) {
-							var definition
-							if ( loop.indexed.type === "text" ) { 
-								definition = self.define_text_part({
-									has : loop.indexed.has 
-								})
-							}
-							if ( loop.indexed.type === "list" ) { 
-								definition = self.define_list_part({
-									has : loop.indexed.has 
-								})
-							}
+					"class"    : "package_main_box_to_the_side_wrap package_body",
+					"position" : "relative",
+					child      : [
+						{
+							"class" : "package_main_large_title",
+							"text"  : define.title
+						},
+						{
+							"class" : "package_main_regular_wrap",
+							child   : this.library.morphism.index_loop({
+								array   : define.part,
+								else_do : function ( loop ) {
+									var definition
+									if ( loop.indexed.type === "text" ) { 
+										definition = self.define_text_part({
+											has : loop.indexed.has 
+										})
+									}
+									if ( loop.indexed.type === "list" ) { 
+										definition = self.define_list_part({
+											has : loop.indexed.has 
+										})
+									}
 
-							if ( loop.indexed.type === "input" ) { 
-								definition = self.define_input_part({
-									has : loop.indexed.has 
-								})
-							}
+									if ( loop.indexed.type === "input" ) { 
+										definition = self.define_input_part({
+											has : loop.indexed.has 
+										})
+									}
 
-							if ( loop.indexed.type === "select" ) { 
-								definition = self.define_dropdown({
-									has : loop.indexed.has
-								})
-							}
+									if ( loop.indexed.type === "select" ) { 
+										definition = self.define_dropdown({
+											has : loop.indexed.has
+										})
+									}
 
-							return loop.into.concat( definition )
+									return loop.into.concat( definition )
+								}
+							})
+						},
+						{
+							"class" : "package_call_logger_box_submit_wrap",
+							child   : this.library.morphism.index_loop({
+								array   : define.button,
+								else_do : function ( loop ) {
+									return loop.into.concat(self.define_button({
+										button : loop.indexed
+									}))
+								}
+							})
 						}
-					})
-				},
-				{
-					type      : "div",
-					attribute : {
-						"class" : "package_call_logger_box_submit_wrap"
-					},
-					children : this.library.morphism.index_loop({
-						array   : define.button,
-						else_do : function ( loop ) {
-							return loop.into.concat(self.define_button({
-								button : loop.indexed
-							}))
-						}
-					})
+					]
 				}
 			]
 		})
+		event_circle = this.library.event_master.make({
+			events : [],
+			state  : {
+				body   : { 
+					main : body.body
+				},
+				option : this.create_option_object_from_part_definition( define.part )
+			},
+		})
+		event_circle.add_event( this.library.dropdown.define_event({
+			body : body.body
+		}))
+		event_circle.add_event( this.library.scribe.define_event({
+			body : body.body
+		}))
+		event_circle.add_event( this.define_event({
+			body : body.body
+		}))
+
+		event_circle.add_listener( this.library.dropdown.define_listener() )
+		event_circle.add_listener( this.library.scribe.define_listener() )
+		event_circle.add_listener( this.define_listener(
+			this.library.morphism.index_loop({
+				array   : define.button,
+				into    : {},
+				else_do : function ( loop ) { 
+					var button_name
+					button_name            = self.convert_text_to_option_name( loop.indexed.text )
+					loop.into[button_name] = loop.indexed
+					return loop.into
+				}
+			})
+		) )
+
 		return body
 	},
 
-	define_dropdown : function ( dropdown ) {
-
-		var definition
-		definition = { 
-			type      : "div",
-			attribute : {
-				"class" : "package_main_regular_wrap",
-			},
-			children : [
-				{ 
-					type      : "div",
-					attribute : {
-						"class" : "package_main_small_title",
-					},
-					property  : { 
-						textContent : dropdown.has.title || ""
-					}
+	define_listener : function ( define ) { 
+		return [
+			{
+				for       : "submit",
+				that_does : function ( heard ) {
+					var button_name
+					button_name         = heard.event.target.getAttribute("data-button-name")
+					define[button_name].submit( heard.state.option )
+					return heard
 				}
-			]
-		}
-		definition.children = definition.children.concat(this.library.dropdown.make({
-			option     : dropdown.has.option,
-			class_name : {
-				main                 : "package_main_dropdown",
-				option_wrap          : "package_main_dropdown_option_wrap",
-				option               : "package_main_dropdown_option",
-				option_selected_wrap : "package_main_dropdown_option_selected_wrap",
-				option_selected      : "package_main_dropdown_option_selected",
-				option_selector      : "package_main_dropdown_option_selector",
+			},
+			{
+				for       : "close",
+				that_does : function ( heard ) {
+					heard.state.body.main.style.display = "none"
+					return heard
+				}
 			}
-		}))
+		]
+	},
 
-		return definition
+	define_event : function ( define ) { 
+		return [
+			{ 
+				called       : "submit",
+				that_happens : [
+					{
+						on : define.body,
+						is : [ "click" ]
+					}
+				],
+				only_if : function ( heard ) {
+					return ( heard.event.target.hasAttribute("data-button") && heard.event.target.getAttribute("data-button") === "submit" )
+				}
+			},
+			{ 
+				called       : "close",
+				that_happens : [
+					{
+						on : define.body,
+						is : [ "click" ]
+					}
+				],
+				only_if : function ( heard ) {
+					return ( heard.event.target.hasAttribute("data-button") && heard.event.target.getAttribute("data-button") === "close" )
+				}
+			}
+		]
+	},
+
+	create_option_object_from_part_definition : function ( definition ) { 
+		var self = this
+		return this.library.morphism.index_loop({
+			array   : definition,
+			into    : {},
+			else_do : function ( loop ) {
+				if ( ["select", "input"].indexOf( loop.indexed.type ) > -1 ) { 
+					var option_name
+					option_name            = self.convert_text_to_option_name( loop.indexed.has.title )
+					loop.into[option_name] = ""
+				}
+				return loop.into
+			}
+		})
+	},
+
+	define_dropdown : function ( dropdown ) {
+		return { 
+			"class" : "package_main_regular_wrap",
+			child   : [].concat(
+				{ 
+					"class" : "package_main_small_title",
+					"text"  : dropdown.has.title || ""
+				},
+				this.library.dropdown.define_body({
+					option     : dropdown.has.option,
+					name       : this.convert_text_to_option_name( dropdown.has.title ),
+					class_name : {
+						main                 : "package_main_dropdown",
+						option_wrap          : "package_main_dropdown_option_wrap",
+						option               : "package_main_dropdown_option",
+						option_selected_wrap : "package_main_dropdown_option_selected_wrap",
+						option_selected      : "package_main_dropdown_option_selected",
+						option_selector      : "package_main_dropdown_option_selector",
+					}
+				})
+			)
+		}
+	},
+
+	convert_text_to_option_name : function ( text ) { 
+		return text.replace(/\s/g, "_").toLowerCase()
 	},
 
 	define_button : function ( define ) { 
+		var button_type
+		button_type = "close"
+		if ( define.button.submit ) {
+			button_type = "submit"
+		}
 		return { 
-			type      : "div",
-			attribute : { 
-				"class" : "package_main_regular_button"
-			},
-			property : { 
-				textContent : define.button.text
-			}
+			"class"            : "package_main_regular_button",
+			"data-button"      : button_type,
+			"data-button-name" : this.convert_text_to_option_name( define.button.text ),
+			"text"             : define.button.text
 		}
 	},
 
 	define_text_part : function ( text ) {
-		return { 
-			type      : "div",
-			attribute : {
-				"class" : "package_call_logger_box_text_wrap"
-			},
-			children : this.library.morphism.index_loop({ 
+		return {
+			"class" : "package_call_logger_box_text_wrap",
+			child   : this.library.morphism.index_loop({ 
 				array   : [].concat( text.has ),
 				else_do : function ( loop ) {
 					var class_name
@@ -149,14 +238,9 @@ define({
 					if ( loop.indexed.type === "title" ) {
 						class_name = "package_main_medium_title"
 					}
-					return loop.into.concat({ 
-						type : "div",
-						attribute : { 
-							"class" : class_name
-						},
-						property : { 
-							textContent : loop.indexed.content
-						}
+					return loop.into.concat({
+						"class" : class_name,
+						"text"  : loop.indexed.content
 					})
 				}
 			})
@@ -165,26 +249,15 @@ define({
 
 	define_list_part : function ( list ) {
 		return { 
-			type      : "div",
-			attribute : {
-				"class" : "package_call_logger_box_list_wrap"
-			},
-			children : [
+			"class" : "package_call_logger_box_list_wrap",
+			child   : [
 				{
-					type : "div",
-					attribute : {
-						"class" : "package_call_logger_box_list_title"
-					},
-					property : {
-						textContent : list.has.title
-					}
+					"class" : "package_call_logger_box_list_title",
+					"text"  : list.has.title
 				},
 				{
-					type      : "div",
-					attribute : {
-						"class" : "package_call_logger_box_list_container"
-					},
-					children  : this.library.morphism.index_loop({ 
+					"class" : "package_call_logger_box_list_container",
+					child   : this.library.morphism.index_loop({ 
 						array   : [].concat( list.has.text ),
 						else_do : function ( loop ) {
 							var notation
@@ -194,28 +267,15 @@ define({
 							}
 
 							return loop.into.concat({
-								type      : "div",
-								attribute : { 
-									"class" : "package_call_logger_box_list_member_wrap"
-								},
-								children : [
+								"class" : "package_call_logger_box_list_member_wrap",
+								child   : [
 									{
-										type      : "div",
-										attribute : { 
-											"class" : "package_call_logger_box_list_notation"
-										},
-										property : { 
-											textContent : notation
-										}
+										"class" : "package_call_logger_box_list_notation",
+										"text"  : notation
 									},
 									{
-										type      : "div",
-										attribute : { 
-											"class" : "package_call_logger_box_list_line"
-										},
-										property : { 
-											textContent : loop.indexed
-										}
+										"class" : "package_call_logger_box_list_line",
+										"text"  : loop.indexed
 									}
 								]
 							})
@@ -227,33 +287,28 @@ define({
 	},
 
 	define_input_part : function ( input ) {
-		return { 
-			type      : "div",
-			attribute : {
-				"class" : "package_main_regular_wrap",
-			},
-			children : [
+		return {
+			"class" : "package_main_regular_wrap",
+			child   : [].concat(
 				{ 
-					type      : "div",
-					attribute : {
-						"class" : "package_main_small_title",
-					},
-					property  : { 
-						textContent : input.has.title || ""
-					}
+					"class" : "package_main_small_title",
+					"text"  : input.has.title || ""
 				},
-				{ 
-					type      : ( input.has.size === "small" ? "input" : "textarea" ),
-					attribute : {
-						"class"       : ( input.has.size === "small" ? "package_main_input" : "package_main_textarea" ),
-						"placeholder" : ( input.has.placeholder ? input.has.placeholder : "" ),
-						"value"       : ( input.has.value ? input.has.value : "" )
-					},
-					property  : { 
-						textContent : input.has.value || ""
+				this.library.scribe.define_body({
+					size       : input.has.size,
+					name       : this.convert_text_to_option_name( input.has.title ),
+					class_name : {
+						small : "package_main_input",
+						large : "package_main_textarea"
 					}
-				}
-			]
+				})
+				// { 
+				// 	type          : ( input.has.size === "small" ? "input" : "textarea" ),
+				// 	"class"       : ( input.has.size === "small" ? "package_main_input" : "package_main_textarea" ),
+				// 	"placeholder" : ( input.has.placeholder ? input.has.placeholder : "" ),
+				// 	"value"       : ( input.has.value ? input.has.value : "" )
+				// }
+			)
 		}
 	}
 })

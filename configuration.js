@@ -4,6 +4,7 @@ define({
 		"library/morphism"
 	],
 	package : [
-		"package/dropdown"
+		"package/dropdown",
+		"package/scribe"
 	]
 })

@@ -28,7 +28,7 @@ define({
 				return this.event.listeners[group_name]
 			},
 			add_event : function (event) {
-				var circle_self
+				var self, circle_self
 				circle_self          = this
 				event                = ( event.constructor === Object ? [event] : event )
 				this.event.listeners = self.library.morphism.index_loop({
