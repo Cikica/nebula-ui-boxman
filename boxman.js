@@ -95,7 +95,12 @@ define({
 			body : body.body
 		}))
 
-		event_circle.add_listener( this.library.dropdown.define_listener() )
+		event_circle.add_listener( this.library.dropdown.define_listener({
+			mark : { 
+				open   : "+",
+				closed : "-"
+			}
+		}) )
 		event_circle.add_listener( this.library.scribe.define_listener() )
 		event_circle.add_listener( this.define_listener(
 			this.library.morphism.index_loop({
@@ -113,6 +118,19 @@ define({
 		return body
 	},
 
+	merge_objects : function ( merge ) {
+		var second
+		second = merge.second
+		this.library.morphism.homomorph({ 
+			object  : merge.first,
+			with    : function ( member ) { 
+				if ( second.hasOwnProperty( member.property_name ) ) { 
+					
+				}
+			}
+		})
+	},
+
 	define_listener : function ( define ) { 
 		return [
 			{
@@ -120,7 +138,12 @@ define({
 				that_does : function ( heard ) {
 					var button_name
 					button_name         = heard.event.target.getAttribute("data-button-name")
-					define[button_name].submit( heard.state.option )
+					define[button_name].submit.call( {}, {
+						close : function () {
+							heard.state.body.main.style.display = "none"	
+						},
+						state : heard.state.option
+					})
 					return heard
 				}
 			},
@@ -179,6 +202,10 @@ define({
 		})
 	},
 
+	convert_text_to_option_name : function ( text ) { 
+		return text.replace(/\s/g, "_").toLowerCase()
+	},
+
 	define_dropdown : function ( dropdown ) {
 		return { 
 			"class" : "package_main_regular_wrap",
@@ -203,10 +230,6 @@ define({
 		}
 	},
 
-	convert_text_to_option_name : function ( text ) { 
-		return text.replace(/\s/g, "_").toLowerCase()
-	},
-
 	define_button : function ( define ) { 
 		var button_type
 		button_type = "close"
@@ -223,7 +246,7 @@ define({
 
 	define_text_part : function ( text ) {
 		return {
-			"class" : "package_call_logger_box_text_wrap",
+			"class" : "package_main_regular_wrap",
 			child   : this.library.morphism.index_loop({ 
 				array   : [].concat( text.has ),
 				else_do : function ( loop ) {
@@ -238,6 +261,12 @@ define({
 					if ( loop.indexed.type === "title" ) {
 						class_name = "package_main_medium_title"
 					}
+					if ( loop.indexed.type === "italic" ) {
+						class_name = "package_main_text_italic"
+					}
+					if ( loop.indexed.type === "large title" ) {
+						class_name = "package_main_large_title"
+					}
 					return loop.into.concat({
 						"class" : class_name,
 						"text"  : loop.indexed.content
@@ -249,14 +278,14 @@ define({
 
 	define_list_part : function ( list ) {
 		return { 
-			"class" : "package_call_logger_box_list_wrap",
+			"class" : "package_main_regular_wrap",
 			child   : [
 				{
-					"class" : "package_call_logger_box_list_title",
+					"class" : "package_main_small_title",
 					"text"  : list.has.title
 				},
 				{
-					"class" : "package_call_logger_box_list_container",
+					"class" : "package_main_regular_wrap",
 					child   : this.library.morphism.index_loop({ 
 						array   : [].concat( list.has.text ),
 						else_do : function ( loop ) {
@@ -267,14 +296,14 @@ define({
 							}
 
 							return loop.into.concat({
-								"class" : "package_call_logger_box_list_member_wrap",
+								"class" : "package_main_list_wrap",
 								child   : [
 									{
-										"class" : "package_call_logger_box_list_notation",
+										"class" : "package_main_list_notation",
 										"text"  : notation
 									},
 									{
-										"class" : "package_call_logger_box_list_line",
+										"class" : "package_main_list_text",
 										"text"  : loop.indexed
 									}
 								]
