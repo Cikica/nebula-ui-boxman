@@ -33,31 +33,11 @@ define({
 							child   : this.library.morphism.index_loop({
 								array   : define.part,
 								else_do : function ( loop ) {
-									var definition
-									if ( loop.indexed.type === "text" ) { 
-										definition = self.define_text_part({
-											has : loop.indexed.has 
-										})
-									}
-									if ( loop.indexed.type === "list" ) { 
-										definition = self.define_list_part({
-											has : loop.indexed.has 
-										})
-									}
-
-									if ( loop.indexed.type === "input" ) { 
-										definition = self.define_input_part({
-											has : loop.indexed.has 
-										})
-									}
-
-									if ( loop.indexed.type === "select" ) { 
-										definition = self.define_dropdown({
-											has : loop.indexed.has
-										})
-									}
-
-									return loop.into.concat( definition )
+									return loop.into.concat( self.get_part_definition({
+										detail : define.detail,
+										name   : loop.indexed.type,
+										has    : loop.indexed.has
+									}) )
 								}
 							})
 						},
@@ -118,95 +98,23 @@ define({
 		return body
 	},
 
-	merge_objects : function ( merge ) {
-		var second
-		second = merge.second
-		this.library.morphism.homomorph({ 
-			object  : merge.first,
-			with    : function ( member ) { 
-				if ( second.hasOwnProperty( member.property_name ) ) { 
-					
-				}
-			}
+	get_part_definition : function ( part ) {
+		var definition
+		if ( part.detail.hasOwnProperty( part.name ) ) {
+			definition = this.merge_objects({
+				first  : part.has,
+				second : part.detail[part.name],
+			})
+		} else { 
+			definition = part.has
+		}
+
+		return this["define_"+ part.name +"_part"]({
+			has : definition 
 		})
 	},
 
-	define_listener : function ( define ) { 
-		return [
-			{
-				for       : "submit",
-				that_does : function ( heard ) {
-					var button_name
-					button_name         = heard.event.target.getAttribute("data-button-name")
-					define[button_name].submit.call( {}, {
-						close : function () {
-							heard.state.body.main.style.display = "none"	
-						},
-						state : heard.state.option
-					})
-					return heard
-				}
-			},
-			{
-				for       : "close",
-				that_does : function ( heard ) {
-					heard.state.body.main.style.display = "none"
-					return heard
-				}
-			}
-		]
-	},
-
-	define_event : function ( define ) { 
-		return [
-			{ 
-				called       : "submit",
-				that_happens : [
-					{
-						on : define.body,
-						is : [ "click" ]
-					}
-				],
-				only_if : function ( heard ) {
-					return ( heard.event.target.hasAttribute("data-button") && heard.event.target.getAttribute("data-button") === "submit" )
-				}
-			},
-			{ 
-				called       : "close",
-				that_happens : [
-					{
-						on : define.body,
-						is : [ "click" ]
-					}
-				],
-				only_if : function ( heard ) {
-					return ( heard.event.target.hasAttribute("data-button") && heard.event.target.getAttribute("data-button") === "close" )
-				}
-			}
-		]
-	},
-
-	create_option_object_from_part_definition : function ( definition ) { 
-		var self = this
-		return this.library.morphism.index_loop({
-			array   : definition,
-			into    : {},
-			else_do : function ( loop ) {
-				if ( ["select", "input"].indexOf( loop.indexed.type ) > -1 ) { 
-					var option_name
-					option_name            = self.convert_text_to_option_name( loop.indexed.has.title )
-					loop.into[option_name] = ""
-				}
-				return loop.into
-			}
-		})
-	},
-
-	convert_text_to_option_name : function ( text ) { 
-		return text.replace(/\s/g, "_").toLowerCase()
-	},
-
-	define_dropdown : function ( dropdown ) {
+	define_select_part : function ( dropdown ) {
 		return { 
 			"class" : "package_main_regular_wrap",
 			child   : [].concat(
@@ -215,7 +123,11 @@ define({
 					"text"  : dropdown.has.title || ""
 				},
 				this.library.dropdown.define_body({
-					option     : dropdown.has.option,
+					option     : {
+						default_value : dropdown.has.default_value || dropdown.has.option.choice[0],
+						mark          : dropdown.has.mark,
+						choice        : dropdown.has.option.choice
+					},
 					name       : this.convert_text_to_option_name( dropdown.has.title ),
 					class_name : {
 						main                 : "package_main_dropdown",
@@ -227,20 +139,6 @@ define({
 					}
 				})
 			)
-		}
-	},
-
-	define_button : function ( define ) { 
-		var button_type
-		button_type = "close"
-		if ( define.button.submit ) {
-			button_type = "submit"
-		}
-		return { 
-			"class"            : "package_main_regular_button",
-			"data-button"      : button_type,
-			"data-button-name" : this.convert_text_to_option_name( define.button.text ),
-			"text"             : define.button.text
 		}
 	},
 
@@ -331,13 +229,111 @@ define({
 						large : "package_main_textarea"
 					}
 				})
-				// { 
-				// 	type          : ( input.has.size === "small" ? "input" : "textarea" ),
-				// 	"class"       : ( input.has.size === "small" ? "package_main_input" : "package_main_textarea" ),
-				// 	"placeholder" : ( input.has.placeholder ? input.has.placeholder : "" ),
-				// 	"value"       : ( input.has.value ? input.has.value : "" )
-				// }
 			)
+		}
+	},
+
+	merge_objects : function ( merge ) {
+		var second
+		second = merge.second
+		this.library.morphism.homomorph({ 
+			object  : merge.first,
+			with    : function ( member ) { 
+				if ( !second.hasOwnProperty( member.property_name ) ) { 
+					second[member.property_name] = member.value
+				}
+				return member.value
+			}
+		})
+		return second
+	},
+
+	define_listener : function ( define ) { 
+		return [
+			{
+				for       : "submit",
+				that_does : function ( heard ) {
+					var button_name
+					button_name         = heard.event.target.getAttribute("data-button-name")
+					define[button_name].submit.call( {}, {
+						close : function () {
+							heard.state.body.main.style.display = "none"	
+						},
+						state : heard.state.option
+					})
+					return heard
+				}
+			},
+			{
+				for       : "close",
+				that_does : function ( heard ) {
+					heard.state.body.main.style.display = "none"
+					return heard
+				}
+			}
+		]
+	},
+
+	define_event : function ( define ) { 
+		return [
+			{ 
+				called       : "submit",
+				that_happens : [
+					{
+						on : define.body,
+						is : [ "click" ]
+					}
+				],
+				only_if : function ( heard ) {
+					return ( heard.event.target.hasAttribute("data-button") && heard.event.target.getAttribute("data-button") === "submit" )
+				}
+			},
+			{ 
+				called       : "close",
+				that_happens : [
+					{
+						on : define.body,
+						is : [ "click" ]
+					}
+				],
+				only_if : function ( heard ) {
+					return ( heard.event.target.hasAttribute("data-button") && heard.event.target.getAttribute("data-button") === "close" )
+				}
+			}
+		]
+	},
+
+	create_option_object_from_part_definition : function ( definition ) { 
+		var self = this
+		return this.library.morphism.index_loop({
+			array   : definition,
+			into    : {},
+			else_do : function ( loop ) {
+				if ( ["select", "input"].indexOf( loop.indexed.type ) > -1 ) { 
+					var option_name
+					option_name            = self.convert_text_to_option_name( loop.indexed.has.title )
+					loop.into[option_name] = ""
+				}
+				return loop.into
+			}
+		})
+	},
+
+	convert_text_to_option_name : function ( text ) { 
+		return text.replace(/\s/g, "_").toLowerCase()
+	},
+
+	define_button : function ( define ) { 
+		var button_type
+		button_type = "close"
+		if ( define.button.submit ) {
+			button_type = "submit"
+		}
+		return { 
+			"class"            : "package_main_regular_button",
+			"data-button"      : button_type,
+			"data-button-name" : this.convert_text_to_option_name( define.button.text ),
+			"text"             : define.button.text
 		}
 	}
 })
