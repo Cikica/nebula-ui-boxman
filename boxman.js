@@ -80,7 +80,7 @@ define({
 				open   : "+",
 				closed : "-"
 			}
-		}) )
+		}))
 		event_circle.add_listener( this.library.scribe.define_listener() )
 		event_circle.add_listener( this.define_listener(
 			this.library.morphism.index_loop({
@@ -115,6 +115,7 @@ define({
 	},
 
 	define_select_part : function ( dropdown ) {
+		console.log( dropdown.has )
 		return { 
 			"class" : "package_main_regular_wrap",
 			child   : [].concat(
@@ -235,7 +236,7 @@ define({
 
 	merge_objects : function ( merge ) {
 		var second
-		second = merge.second
+		second = this.library.morphism.copy({ what : merge.second })
 		this.library.morphism.homomorph({ 
 			object  : merge.first,
 			with    : function ( member ) { 
