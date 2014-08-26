@@ -1,10 +1,11 @@
 define({
 	main   : "boxman",
 	module : [
-		"library/morphism"
+		"library/event_master"
 	],
 	package : [
-		"package/dropdown",
-		"package/scribe"
+		"library/eloquent",
+		"library/transistor",
+		"library/morph",
 	]
 })

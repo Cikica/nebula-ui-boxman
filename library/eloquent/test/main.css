@@ -1,0 +1,137 @@
+body { 
+	width              : 100%;
+	float              : left;
+	margin             : 0;
+	padding            : 20px;
+	-moz-box-sizing    : border-box; 
+	-webkit-box-sizing : border-box; 
+	box-sizing         : border-box;
+}
+
+.wrap_text {
+	width         : 100%;
+	float         : left;
+	margin-bottom : 20px;
+}
+
+.regular_text {
+	text-transform: uppercase;
+}
+
+.imporant_text {
+	color : #23ff44;
+}
+
+.italic_text {
+	font-style: italic;
+}
+
+.wrap_list {
+	width: 100%;
+	float: left;
+	margin-bottom: 20px;
+}
+
+.wrap_list_item {
+	width         : 100%;
+	float         : left;
+	margin-bottom : 5px;
+}
+
+.list_item_text_wrap {
+	float: left;
+	display: inline-block;
+}
+
+.list_item_notation {
+	float: left;
+	display: inline-block;
+}
+
+
+.list_item_text {
+	float: left;
+	display: inline-block;
+}
+
+.list_item_list {
+	margin-left: 10px;
+	float: left;
+	width: 100%;
+}
+
+.wrap_input {
+	width     : 100%;
+	float         : left;
+	margin-bottom : 20px;
+}
+
+.input_small {
+	margin-bottom: 10px;
+}
+
+.input_large {
+	margin-bottom: 10px;
+}
+
+.input_text {
+	text-transform: uppercase;
+}
+
+.dropdown_main {
+	width   : 100px;
+	float   : left;
+	margin  : 10px 0;
+	clear   : both;
+}
+
+.option_selected_wrap {
+	width            : 100%;
+	float            : left;
+	background-color : #555;
+	color            : #fff;
+	padding          : 10px;
+}
+
+.option_selected {
+	display : inline-block;
+	float   : left;
+	width   : 90%;
+}
+
+.option_selector {
+	display : inline-block;
+	float   : left;
+	width   : 10%;	
+}
+
+.option_wrap {
+
+}
+
+.option {
+
+}
+
+.radio_wrap { 
+	width            : 300px;
+	float            : left;
+	padding          : 10px;
+	background-color : #555;
+	clear            : both;
+	color            : #fff;
+}
+
+.radio_item { 
+	width   : 100px;
+	float   : left;
+	display : inline-block;
+}
+
+.radio_item_selected {
+	width            : 100px;
+	float            : left;
+	display          : inline-block;
+	color            : #555;
+	background-color : #fff;
+}
