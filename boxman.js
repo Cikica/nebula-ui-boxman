@@ -14,7 +14,120 @@ define({
 		var body, self, content, event_circle, part_name
 		self      = this
 		part_name = this.library.morph.get_the_keys_of_an_object( define.part )
-		body      = this.library.transistor.make({
+		body      = this.library.transistor.make( this.define_body({
+			part_name  : part_name,
+			class_name : define.class_name,
+			title      : define.title,
+			button     : define.button,
+			part       : define.part,
+		}))
+		content   = this.library.morph.homomorph({
+			object : define.part,
+			with   : function ( member ) {
+				var part
+				part = self.library.eloquent.make({
+					class_name : define.class_name,
+					part       : member.value
+				})
+				part.transistor.append(
+					body.get("box body").body
+				)
+				if ( member.count > 0 ) { 
+					part.transistor.body.style.display = "none"
+				}
+				return part
+			}
+		})
+		event_circle = Object.create( this.library.event_master ).make({
+			state : {
+				body : {
+					main     : body,
+					subtitle : ( part_name.length > 1 ? body.get("box subtitle") : false ),
+					body     : body.get("box body"),
+					content  : content
+				},
+				button : this.library.morph.index_loop({
+					subject : define.button,
+					into    : {},
+					else_do : function ( loop ) {
+						var button_name
+						button_name            = self.convert_text_to_option_name( loop.indexed.text )
+						loop.into[button_name] = loop.indexed.with
+						return loop.into
+					}
+				}),
+				page   : {
+					on   : part_name[0],
+					name : part_name
+				}
+			},
+			events : [
+				{ 
+					called       : "move button click",
+					that_happens : [
+						{ 
+							on : body.body,
+							is : [ "click" ]
+						}
+					],
+					only_if : function ( heard ) { 
+						return ( heard.event.target.hasAttribute("data-box-change") )
+					}
+				},
+				{
+					called       : "regular button click",
+					that_happens : [
+						{
+							on : body.body,
+							is : [ "click" ]
+						}
+					],
+					only_if  : function ( heard ) { 
+						return ( heard.event.target.hasAttribute("data-box-button") )
+					}
+				}
+			],	
+		})
+		event_circle.add_listener([
+			{
+				for       : "regular button click",
+				that_does : function ( heard ) {
+					var button_name
+					button_name = heard.event.target.getAttribute("data-box-button")
+					heard.state.button[button_name].call( {}, self.create_button_click_object({
+						state : heard.state,
+						event : heard.event,
+						name  : button_name
+					}))
+					return heard 
+				}
+			},
+			{
+				for       : "move button click",
+				that_does : function ( heard ) {
+					var next_page, page_name
+					page_name = heard.state.page.on
+					next_page = self.get_index_and_name_of_next_page({
+						with_minus : ( heard.event.target.getAttribute("data-box-change") === "next" ),
+						name       : heard.state.page.name,
+						on         : heard.state.page.on,
+					})
+					heard.state.page.on = next_page.name
+					heard.state.body.content[page_name].transistor.body.style.display      = "none"
+					heard.state.body.content[next_page.name].transistor.body.style.display = "block"
+					heard.state.body.subtitle.body.textContent                             = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
+					return heard
+				}
+			}
+		])
+		body.append(
+			document.body
+		)
+	},
+
+	define_body : function ( define ) { 
+		var definition
+		definition = {
 			"class"    : "package_main_softscreen_wrap",
 			"position" : "fixed",
 			"top"      : "0px",
@@ -25,89 +138,60 @@ define({
 					"mark_as"  : "box body",
 					"position" : "relative",
 					"child"    : [
-						{
-							"class"   : define.class_name.box.title,
-							"mark_as" : "box title",
-							"text"    : define.title,
-						},
-						{
-							"class"   : define.class_name.box.subtitle,
-							"mark_as" : "box subtitle",
-							"text"    : "Viewing: Submit Box"
+						{ 
+							"class" : define.class_name.box.title_wrap,
+							"child" : [
+								{
+									"class"   : define.class_name.box.title,
+									"mark_as" : "box title",
+									"text"    : define.title,
+								}
+							]
 						},
 						{
 							"class"   : define.class_name.box.body,
 							"mark_as" : "box body"
 						}
-					].concat( self.define_button( define ) )
+					].concat( this.define_button( define ) )
 				},
 			]
-		})
-		content      = this.library.morph.homomorph({
-			object : define.part,
-			with   : function ( member ) {
-				var part_body
-				part_body = self.library.eloquent.make({
-					class_name : define.class_name,
-					part       : member.value
-				})
-				part_body.append(
-					body.get("box body").body
-				)
-				if ( member.count > 0 ) { 
-					part_body.body.style.display = "none"
-				}
-				return part_body
-			}
-		})
-		event_circle = Object.create( this.library.event_master ).make({
-			state : {
-				body : {
-					main     : body,
-					subtitle : body.get("box subtitle"),
-					body     : body.get("box body"),
-					content  : content
-				},
-				page : {
-					on   : part_name[0],
-					name : part_name
-				}
+		}
+
+		if ( define.part_name.length > 1 ) { 
+			definition.child[0].child[0].child = definition.child[0].child[0].child.concat({
+				"class"   : define.class_name.box.subtitle,
+				"mark_as" : "box subtitle",
+				"text"    : "Viewing: "+ this.convert_option_name_to_regular_name( define.part_name[0] )
+			})
+		}
+
+		return definition
+	},
+
+	create_button_click_object : function ( button ) {
+		var self = this
+		return {
+			close : function () {
+				document.body.removeChild( button.state.body.main.body )
 			},
-			events : [
-				{
-					called       : "move button click",
-					that_happens : [
-						{
-							on : body.body,
-							is : [ "click" ]
-						}
-					],
-					only_if  : function ( heard ) { 
-						return ( heard.event.target.hasAttribute("data-box-change") )
+			get_state : function () {
+				var option, set
+				set    = {}
+				option = self.library.morph.homomorph({
+					object : button.state.body.content,
+					set    : "array",
+					with   : function ( member ) { 
+						set = self.merge_objects({
+							first  : member.value.get_state().option,
+							second : set
+						})
+						return member.value
 					}
-				}
-			],	
-		})
-		event_circle.add_listener({
-			for       : "move button click",
-			that_does : function ( heard ) {
-				var next_page, page_name
-				page_name = heard.state.page.on
-				next_page = self.get_index_and_name_of_next_page({
-					with_minus : ( heard.event.target.getAttribute("data-box-change") === "next" ),
-					name       : heard.state.page.name,
-					on         : heard.state.page.on,
 				})
-				heard.state.page.on = next_page.name
-				heard.state.body.content[page_name].body.style.display      = "none"
-				heard.state.body.content[next_page.name].body.style.display = "block"
-				heard.state.body.subtitle.body.textContent                  = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
-				return heard
+				// this aint statless boi, oh no it aint
+				return set
 			}
-		})
-		body.append(
-			document.body
-		)
+		}
 	},
 
 	convert_option_name_to_regular_name : function ( option_name ) { 
@@ -135,7 +219,8 @@ define({
 	},
 
 	define_button : function ( define ) {
-		var number_of_pages, buttons
+		var number_of_pages, buttons, self
+		self            = this
 		number_of_pages = this.library.morph.get_the_keys_of_an_object( define.part ).length
 		buttons         = [
 			{
@@ -164,100 +249,20 @@ define({
 				var definition, button_type
 				button_type = loop.indexed.type || "regular"
 				definition  = {
-					"class"                : define.class_name.box.button[button_type],
-					"text"                 : loop.indexed.text,
-					"data-box-button-type" : button_type
+					"class"           : define.class_name.box.button[button_type],
+					"text"            : loop.indexed.text,
+					"data-box-button" : self.convert_text_to_option_name( loop.indexed.text )
 				}
 				return loop.into.concat( definition )
 			}
 		}))
-		console.log( buttons )
 		return buttons
-	},
-
-	format_part : function ( parts ) {
-		var self = this
-		return this.library.morphism.index_loop({
-			array   : parts,
-			else_do : function ( loop ) {
-				var part
-				if ( loop.indexed.type === "button" ) { 
-					part = self.format_button( loop.indexed )
-				}
-				return loop.into.concat( part || loop.indexed )
-			}
-		})
-	},
-
-	format_button : function ( define ) {
-		return { 
-			type : define.type,
-			name : define.name,
-			with : {
-				method : function ( heard ) {
-					heard.option_state = define.with.method.call({}, {
-						heard : heard,
-						box   : {
-							close : function () {
-								var box 
-								box = event.target.parentElement.parentElement.parentElement
-								document.body.removeChild( box )
-							},
-						},
-					})
-					return { 
-						state : heard.state,
-						event : heard.event,
-					}
-				},
-				text : define.with.text
-			}
-		}
-	},
-
-	define_list_part : function ( list ) {
-		return { 
-			"class" : "package_main_regular_wrap",
-			child   : [
-				{
-					"class" : "package_main_small_title",
-					"text"  : list.has.title
-				},
-				{
-					"class" : "package_main_regular_wrap",
-					child   : this.library.morphism.index_loop({ 
-						array   : [].concat( list.has.text ),
-						else_do : function ( loop ) {
-							var notation
-							notation = ( loop.index + 1 ) + "."
-							if ( list.has.notation ) {  
-								notation = list.has.notation
-							}
-
-							return loop.into.concat({
-								"class" : "package_main_list_wrap",
-								child   : [
-									{
-										"class" : "package_main_list_notation",
-										"text"  : notation
-									},
-									{
-										"class" : "package_main_list_text",
-										"text"  : loop.indexed
-									}
-								]
-							})
-						}
-					})
-				}
-			],
-		}
 	},
 
 	merge_objects : function ( merge ) {
 		var second
-		second = this.library.morphism.copy({ what : merge.second })
-		this.library.morphism.homomorph({ 
+		second = this.library.morph.copy({ what : merge.second })
+		this.library.morph.homomorph({ 
 			object  : merge.first,
 			with    : function ( member ) { 
 				if ( !second.hasOwnProperty( member.property_name ) ) { 
@@ -267,22 +272,6 @@ define({
 			}
 		})
 		return second
-	},
-
-	create_option_object_from_part_definition : function ( definition ) { 
-		var self = this
-		return this.library.morphism.index_loop({
-			array   : definition,
-			into    : {},
-			else_do : function ( loop ) {
-				if ( ["select", "input"].indexOf( loop.indexed.type ) > -1 ) { 
-					var option_name
-					option_name            = self.convert_text_to_option_name( loop.indexed.has.title )
-					loop.into[option_name] = ""
-				}
-				return loop.into
-			}
-		})
 	},
 
 	convert_text_to_option_name : function ( text ) { 

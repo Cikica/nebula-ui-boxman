@@ -63,7 +63,12 @@ define({
 				define.append_to
 			)
 		} else { 
-			return body
+			return {
+				transistor : body,
+				get_state  : function () { 
+					return event_circle.get_state()
+				}
+			}
 		}
 	},
 
