@@ -137,39 +137,41 @@ define({
 	define_button : function ( define ) {
 		var number_of_pages, buttons
 		number_of_pages = this.library.morph.get_the_keys_of_an_object( define.part ).length
-		buttons         = []
+		buttons         = [
+			{
+				"class" : define.class_name.box.button.wrap,
+				"child" : []
+			}
+		]
 		if ( number_of_pages > 1 ) {
-			buttons = buttons.concat({
-				"class" : define.class_name.box.button_wrap,
-				"child" : [
-					{
-						"class"           : define.class_name.box.button.change,
-						"text"            : "Previous Part",
-						"data-box-change" : "previous",
-					},
-					{
-						"class"           : define.class_name.box.button.change,
-						"text"            : "Next Part",
-						"data-box-change" : "next",
-					}
-				]
-			})
-		}
-		buttons.concat(this.library.morph.index_loop({
-			subject : define.button,
-			else_do : function ( loop ) {
-				var definition
-				definition = {
-					"class"           : define.class_name.box.button,
+			buttons[0].child = buttons[0].child.concat([
+				{
+					"class"           : define.class_name.box.button.regular,
 					"text"            : "Previous Part",
-				}
-				
 					"data-box-change" : "previous",
 				},
-				console.log( loop.indexed )
-				return []
+				{
+					"class"           : define.class_name.box.button.regular,
+					"text"            : "Next Part",
+					"data-box-change" : "next",
+				}
+			])
+		}
+
+		buttons[0].child = buttons[0].child.concat(this.library.morph.index_loop({
+			subject : define.button,
+			else_do : function ( loop ) {
+				var definition, button_type
+				button_type = loop.indexed.type || "regular"
+				definition  = {
+					"class"                : define.class_name.box.button[button_type],
+					"text"                 : loop.indexed.text,
+					"data-box-button-type" : button_type
+				}
+				return loop.into.concat( definition )
 			}
 		}))
+		console.log( buttons )
 		return buttons
 	},
 
