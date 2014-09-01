@@ -108,7 +108,7 @@ define({
 					var next_page, page_name
 					page_name = heard.state.page.on
 					next_page = self.get_index_and_name_of_next_page({
-						with_minus : ( heard.event.target.getAttribute("data-box-change") === "next" ),
+						with_minus : ( heard.event.target.getAttribute("data-box-change") !== "next" ),
 						name       : heard.state.page.name,
 						on         : heard.state.page.on,
 					})
@@ -212,6 +212,8 @@ define({
 		default_index      = ( get.with_minus ? get.name.length-1 : 0 )
 		next_index         = ( get.with_minus ? current_name_index - 1 : current_name_index + 1 )
 		final_index        = ( get.name[next_index] === undefined  ? default_index : next_index )
+		console.log( get )
+		console.log( final_index )
 		return { 
 			name  : get.name[final_index],
 			index : final_index

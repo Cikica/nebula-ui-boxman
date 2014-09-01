@@ -45,9 +45,11 @@ define({
 		state = { 
 			value : define.with.option.value || define.with.option.choice[0]
 		}
-		if ( define.with.input && define.with.input.verify ) {
-			state.verify  = define.with.input.verify
+		if ( define.with.input ) {
 			state.show_on = define.with.input.show_on
+			if ( define.with.input.verify ) {
+				state.verify  = define.with.input.verify
+			}
 		}
 
 		return state

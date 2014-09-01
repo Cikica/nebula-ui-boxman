@@ -58,7 +58,7 @@ define({
 		option_state       = input.state.option[input.event.target.getAttribute( input.data_name )]
 		value              = input.event.target.value
 		option_state.value = value
-		if ( option_state.verify.when ) {
+		if ( option_state.verify && option_state.verify.when ) {
 			var verification, text_body
 			text_body = input.event.target.nextSibling
 			if ( option_state.verify.when( value ) ) {

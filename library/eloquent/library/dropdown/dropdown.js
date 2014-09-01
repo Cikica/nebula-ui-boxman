@@ -131,14 +131,14 @@ define({
 					"data-dropdown"    : "true",
 					"data-mark-closed" : define.with.option.mark.closed,
 					"data-mark-open"   : define.with.option.mark.open,
-					child              : [
+					"child"            : [
 						{
 							"class" : define.class_name.option_selected,
-							"text"  : define.with.option.default_value
+							"text"  : define.with.option.value || define.with.option.choice[0]
 						},
 						{
-							"class"            : define.class_name.option_selector,
-							"text"             : define.with.option.mark.closed
+							"class" : define.class_name.option_selector,
+							"text"  : define.with.option.mark.closed
 						},
 					]
 				},
