@@ -165,6 +165,8 @@ define({
 		"library/shumput",
 		"library/dropdown",
 		"library/keyswitch",
-		"library/button"
+		"library/button",
+		"library/gregor",
+		"library/tabular",
 	]
 })

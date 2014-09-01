@@ -12,7 +12,9 @@ define({
 			"dropdown",
 			"list",
 			"tree_option",
-			"button"
+			"gregor",
+			"button",
+			"tabular"
 		]
 	},
 
@@ -21,13 +23,15 @@ define({
 
 		self                      = this
 		part_name_to_package_name = {
-			"radio"     : "keyswitch",
-			"text"      : "text",
-			"input"     : "shumput",
-			"list"      : "list",
-			"select"    : "dropdown",
-			"tree"      : "tree_option",
-			"button"    : "button"
+			"radio"  : "keyswitch",
+			"text"   : "text",
+			"input"  : "shumput",
+			"list"   : "list",
+			"select" : "dropdown",
+			"tree"   : "tree_option",
+			"date"   : "gregor",
+			"button" : "button",
+			"table"  : "tabular"
 		}
 		body                 = this.library.transistor.make( this.define_body({
 			part_name_to_package_name : part_name_to_package_name,
@@ -85,9 +89,9 @@ define({
 				package_object = self.library[package_name]
 
 				if ( package_object.hasOwnProperty("define_event") ) {
-					var option_name = self.convert_text_to_option_name( loop.indexed.name )
+					var option_name        = self.convert_text_to_option_name( loop.indexed.name )
 					loop.into[option_name] = package_object.define_state({
-						for  : loop.indexed.name,
+						for  : option_name,
 						with : loop.indexed.with,
 						body : define.body
 					})
@@ -110,7 +114,6 @@ define({
 				} else {
 					return loop.into
 				}
-
 			}
 		})
 	},
