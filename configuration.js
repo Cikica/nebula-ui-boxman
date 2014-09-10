@@ -7,5 +7,6 @@ define({
 		"library/eloquent",
 		"library/transistor",
 		"library/morph",
+		"library/button"
 	]
 })

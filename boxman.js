@@ -6,12 +6,16 @@ define({
 			"event_master",
 			"eloquent",
 			"transistor",
+			"button"
 		],
 		allow : "*"
 	},
 
 	make : function ( define ) {
-		var body, self, content, event_circle, part_name
+
+		var body, self, content, event_circle, 
+		part_name, detail, button
+
 		self      = this
 		part_name = this.library.morph.get_the_keys_of_an_object( define.part )
 		body      = this.library.transistor.make( this.define_body({
@@ -38,66 +42,97 @@ define({
 				return part
 			}
 		})
-		event_circle = Object.create( this.library.event_master ).make({
-			state : {
-				body : {
-					main     : body,
-					subtitle : ( part_name.length > 1 ? body.get("box subtitle") : false ),
-					body     : body.get("box body"),
-					content  : content
-				},
-				button : this.library.morph.index_loop({
-					subject : define.button,
-					into    : {},
-					else_do : function ( loop ) {
-						var button_name
-						button_name            = self.convert_text_to_option_name( loop.indexed.text )
-						loop.into[button_name] = loop.indexed.with
-						return loop.into
-					}
-				}),
-				page   : {
-					on   : part_name[0],
-					name : part_name
-				}
+		button    = this.library.button.make({
+			class_name : { 
+				wrap   : "package_main_regular_wrap",
+				button : "package_main_regular_button"
 			},
-			events : [
-				{ 
-					called       : "move button click",
-					that_happens : [
-						{ 
-							on : body.body,
-							is : [ "click" ]
-						}
-					],
-					only_if : function ( heard ) { 
-						return ( heard.event.target.hasAttribute("data-box-change") )
-					}
-				},
-				{
-					called       : "regular button click",
-					that_happens : [
-						{
-							on : body.body,
-							is : [ "click" ]
-						}
-					],
-					only_if  : function ( heard ) { 
-						return ( heard.event.target.hasAttribute("data-box-button") )
-					}
-				}
-			],	
+			provided : {
+				box     : body.body,
+				content : body.get("main body").body
+			},
+			button : [
+				"next",
+				"previous",
+				"close",
+				// {
+				// 	called : "Box",
+				// 	with   : function () {},
+				// }
+			]
 		})
-		event_circle.add_listener([
+
+		button.body.append( body.get("main body").body )
+		// event_circle = Object.create( this.library.event_master ).make({
+		// 	state : {
+		// 		body : {
+		// 			main     : body,
+		// 			subtitle : ( part_name.length > 1 ? body.get("box subtitle") : false ),
+		// 			body     : body.get("box body"),
+		// 			content  : content
+		// 		},
+		// 		button : this.library.morph.index_loop({
+		// 			subject : define.button,
+		// 			into    : {},
+		// 			else_do : function ( loop ) {
+		// 				var button_name
+		// 				button_name            = self.convert_text_to_option_name( loop.indexed.text )
+		// 				loop.into[button_name] = loop.indexed.with
+		// 				return loop.into
+		// 			}
+		// 		}),
+		// 		page   : {
+		// 			on   : part_name[0],
+		// 			name : part_name
+		// 		}
+		// 	},
+		// 	events : [
+		// 		{ 
+		// 			called       : "move button click",
+		// 			that_happens : [
+		// 				{ 
+		// 					on : body.body,
+		// 					is : [ "click" ]
+		// 				}
+		// 			],
+		// 			only_if : function ( heard ) { 
+		// 				return ( heard.event.target.hasAttribute("data-box-change") )
+		// 			}
+		// 		},
+		// 		{
+		// 			called       : "regular button click",
+		// 			that_happens : [
+		// 				{
+		// 					on : body.body,
+		// 					is : [ "click" ]
+		// 				}
+		// 			],
+		// 			only_if  : function ( heard ) { 
+		// 				return ( heard.event.target.hasAttribute("data-box-button") )
+		// 			}
+		// 		}
+		// 	],	
+		// })
+
+		// event_circle.add_listener( this.define_listener() )
+
+		body.append(
+			document.body
+		)
+	},
+
+	define_listener : function ( define ) {
+		var self = this
+		return [
 			{
 				for       : "regular button click",
 				that_does : function ( heard ) {
 					var button_name
 					button_name = heard.event.target.getAttribute("data-box-button")
 					heard.state.button[button_name].call( {}, self.create_button_click_object({
-						state : heard.state,
-						event : heard.event,
-						name  : button_name
+						state  : heard.state,
+						event  : heard.event,
+						name   : button_name
 					}))
 					return heard 
 				}
@@ -119,23 +154,20 @@ define({
 					return heard
 				}
 			}
-		])
-		body.append(
-			document.body
-		)
+		]
 	},
 
 	define_body : function ( define ) { 
 		var definition
 		definition = {
-			"class"    : "package_main_softscreen_wrap",
+			"class"    : define.class_name.box.wrap,
 			"position" : "fixed",
 			"top"      : "0px",
 			"z-index"  : "999",
 			"child"    : [
 				{
-					"class"    : "package_main_box_to_the_side_wrap package_body",
-					"mark_as"  : "box body",
+					"class"    : define.class_name.box.box_wrap,
+					"mark_as"  : "main body",
 					"position" : "relative",
 					"child"    : [
 						{ 
@@ -152,7 +184,7 @@ define({
 							"class"   : define.class_name.box.body,
 							"mark_as" : "box body"
 						}
-					].concat( this.define_button( define ) )
+					]
 				},
 			]
 		}
@@ -212,8 +244,6 @@ define({
 		default_index      = ( get.with_minus ? get.name.length-1 : 0 )
 		next_index         = ( get.with_minus ? current_name_index - 1 : current_name_index + 1 )
 		final_index        = ( get.name[next_index] === undefined  ? default_index : next_index )
-		console.log( get )
-		console.log( final_index )
 		return { 
 			name  : get.name[final_index],
 			index : final_index
