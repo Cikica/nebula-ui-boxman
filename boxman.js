@@ -48,9 +48,9 @@ define({
 				button : "package_main_regular_button"
 			},
 			provided : {
-				box     : body.body,
-				title   : body.get("box title").body,
-				content : body.get("main body").body
+				box       : body.body,
+				title     : body.get("box title").body,
+				content   : body.get("box body").body
 			},
 			button : [
 				"next",
@@ -192,9 +192,10 @@ define({
 
 		if ( define.part_name.length > 1 ) { 
 			definition.child[0].child[0].child = definition.child[0].child[0].child.concat({
-				"class"   : define.class_name.box.subtitle,
-				"mark_as" : "box subtitle",
-				"text"    : "Viewing: "+ this.convert_option_name_to_regular_name( define.part_name[0] )
+				"class"               : define.class_name.box.subtitle,
+				"mark_as"             : "box subtitle",
+				"data-box-page-title" : define.part_name[0],
+				"text"                : "Viewing: "+ this.convert_option_name_to_regular_name( define.part_name[0] )
 			})
 		}
 
@@ -281,6 +282,18 @@ define({
 			}
 		})
 		return second
+	},
+
+	convert_option_name_to_regular_name : function ( option_name ) { 
+		return this.library.morph.index_loop({
+			subject : option_name.split("_"),
+			if_done : function ( loop ) {
+				return loop.into.join(" ")
+			},
+			else_do : function ( loop ) {
+				return loop.into.concat(( loop.indexed[0].toUpperCase() + loop.indexed.slice(1) ))
+			}
+		})
 	},
 
 	convert_text_to_option_name : function ( text ) { 

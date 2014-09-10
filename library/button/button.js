@@ -31,8 +31,7 @@ define({
 		return {
 			change : {
 				body  : define.provided.content,
-				title : define.provided.title,
-				on    : 0,
+				title : define.provided.title
 			}
 		}
 	},
@@ -85,20 +84,25 @@ define({
 			{
 				for       : "move button click",
 				that_does : function ( heard ) {
+					var content 
+					content = heard.state.change.body.children
+					
 
-					var next_page, page_name
+					// var next_page, page_name
 
-					page_name = heard.state.page.on
-					next_page = self.get_index_and_name_of_next_page({
-						with_minus : ( heard.event.target.getAttribute("data-box-change") !== "next" ),
-						name       : heard.state.page.name,
-						on         : heard.state.page.on,
-					})
-
-					heard.state.page.on = next_page.name
-					heard.state.body.content[page_name].transistor.body.style.display      = "none"
-					heard.state.body.content[next_page.name].transistor.body.style.display = "block"
-					heard.state.body.subtitle.body.textContent                             = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
+					// page_name = heard.state.page.on
+					// next_page = self.get_index_and_name_of_next_page({
+					// 	with_minus : ( heard.event.target.getAttribute("data-box-change") !== "next" ),
+					// 	name       : heard.change.names,
+					// 	on         : heard.change.on,
+					// })
+					// console.log( page_name )
+					// heard.state.body.children
+					// heard.state.title.textContent = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
+					// heard.state.page.on = next_page.name
+					// heard.state.body.content[page_name].transistor.body.style.display      = "none"
+					// heard.state.body.content[next_page.name].transistor.body.style.display = "block"
+					// heard.state.body.subtitle.body.textContent                             = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
 
 					return heard
 				}
