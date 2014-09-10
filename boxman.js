@@ -49,6 +49,7 @@ define({
 			},
 			provided : {
 				box     : body.body,
+				title   : body.get("box title").body,
 				content : body.get("main body").body
 			},
 			button : [
@@ -223,30 +224,6 @@ define({
 				// this aint statless boi, oh no it aint
 				return set
 			}
-		}
-	},
-
-	convert_option_name_to_regular_name : function ( option_name ) { 
-		return this.library.morph.index_loop({
-			subject : option_name.split("_"),
-			if_done : function ( loop ) {
-				return loop.into.join(" ")
-			},
-			else_do : function ( loop ) {
-				return loop.into.concat(( loop.indexed[0].toUpperCase() + loop.indexed.slice(1) ))
-			}
-		})
-	},
-
-	get_index_and_name_of_next_page : function ( get ) {
-		var current_name_index, next_index, default_index, final_index
-		current_name_index = get.name.indexOf( get.on )
-		default_index      = ( get.with_minus ? get.name.length-1 : 0 )
-		next_index         = ( get.with_minus ? current_name_index - 1 : current_name_index + 1 )
-		final_index        = ( get.name[next_index] === undefined  ? default_index : next_index )
-		return { 
-			name  : get.name[final_index],
-			index : final_index
 		}
 	},
 

@@ -27,8 +27,14 @@ define({
 		}
 	},
 
-	define_state : function () {
-		return {}
+	define_state : function ( define ) {
+		return {
+			change : {
+				body  : define.provided.content,
+				title : define.provided.title,
+				on    : 0,
+			}
+		}
 	},
 
 	define_event : function ( define ) {
@@ -61,6 +67,7 @@ define({
 	},
 
 	define_listener : function ( define ) {
+		var self = this
 		return [
 			{
 				for       : "regular button click",
@@ -78,17 +85,21 @@ define({
 			{
 				for       : "move button click",
 				that_does : function ( heard ) {
+
 					var next_page, page_name
+
 					page_name = heard.state.page.on
 					next_page = self.get_index_and_name_of_next_page({
 						with_minus : ( heard.event.target.getAttribute("data-box-change") !== "next" ),
 						name       : heard.state.page.name,
 						on         : heard.state.page.on,
 					})
+
 					heard.state.page.on = next_page.name
 					heard.state.body.content[page_name].transistor.body.style.display      = "none"
 					heard.state.body.content[next_page.name].transistor.body.style.display = "block"
 					heard.state.body.subtitle.body.textContent                             = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
+
 					return heard
 				}
 			}
@@ -135,6 +146,32 @@ define({
 				"text"                   : definition.text || definition.type[0].toUpperCase() + definition.type.slice(1)
 			}
 		}
-	}
+	},
 
+	get_index_and_name_of_next_page : function ( get ) {
+		
+		var current_name_index, next_index, default_index, final_index
+
+		current_name_index = get.name.indexOf( get.on )
+		default_index      = ( get.with_minus ? get.name.length-1 : 0 )
+		next_index         = ( get.with_minus ? current_name_index - 1 : current_name_index + 1 )
+		final_index        = ( get.name[next_index] === undefined  ? default_index : next_index )
+		
+		return { 
+			name  : get.name[final_index],
+			index : final_index
+		}
+	},
+
+	convert_option_name_to_regular_name : function ( option_name ) { 
+		return this.library.morph.index_loop({
+			subject : option_name.split("_"),
+			if_done : function ( loop ) {
+				return loop.into.join(" ")
+			},
+			else_do : function ( loop ) {
+				return loop.into.concat(( loop.indexed[0].toUpperCase() + loop.indexed.slice(1) ))
+			}
+		})
+	},
 })
