@@ -46,11 +46,12 @@ define({
 				wrap   : "package_main_regular_wrap",
 				button : "package_main_gray_button",
 				submit : "package_main_regular_button",
+				box    : "package_main_regular_button",
 			},
 			provided : {
 				box       : body.body,
 				body      : body.get("main body").body,
-				title     : body.get("box subtitle").body,
+				title     : ( part_name.length < 2 ? {} : body.get("box subtitle").body ),
 				content   : body.get("box body").body,
 				eloquent  : content,
 				part_name : part_name,

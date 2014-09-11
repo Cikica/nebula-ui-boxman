@@ -138,8 +138,9 @@ define({
 			{ 
 				for       : "box button click",
 				that_does : function ( heard ) {
-					var box, definition
-					definition                       = define.provided.extra_box.checklist
+					var box, definition, what_box_to_open
+					what_box_to_open                 = heard.event.target.getAttribute("data-box-button-box")
+					definition                       = define.provided.extra_box[what_box_to_open]
 					definition.class_name            = define.provided.class_name
 					box                              = define.provided.make_box( definition )
 					define.provided.body.style.right = "5%"
@@ -185,7 +186,7 @@ define({
 					previous_button.style.display              = ( heard.state.change.index === 0 ? "none" : "block" )
 					next_button.style.display                  = ( heard.state.change.index === heard.state.change.page_name.length-1 ? "none" : "blocK" )
 					heard.state.change.on_page                 = heard.state.change.page_name[heard.state.change.index]
-					heard.state.change.title.textContent       = self.convert_option_name_to_regular_name( heard.state.change.on_page )
+					heard.state.change.title.textContent       = "Viewing : "+ self.convert_option_name_to_regular_name( heard.state.change.on_page )
 
 					return heard
 				}
@@ -236,8 +237,9 @@ define({
 			{
 				for       : "close button click",
 				that_does : function ( heard ) {
-					var body = heard.state.close.body 
-					if ( body.previousSibling.hasAttribute("data-boxman-theman") ) {
+					var body = heard.state.close.body
+
+					if ( body.previousSibling.nodeName === "DIV" && body.previousSibling.hasAttribute("data-boxman-theman") ) {
 						body.previousSibling.firstChild.style.right = "0px"
 					}  
 					body.parentElement.removeChild( heard.state.close.body )
@@ -305,10 +307,11 @@ define({
 		if ( definition.type === "box" ) {
 			return { 
 				"class"                 : define.class_name.box || define.class_name.button,
-				"data-box-button-box"   : define.button_index,
+				"data-box-button-box"   : definition.open_box,
 				"mark_as"               : "button "+ define.button_index,
 				"data-box-button-index" : define.button_index,
-				"text"                  : define.called || "Box"
+				"display"               : ( define.provided.part_name === definition.show_on ? "block" : "none" ),
+				"text"                  : definition.called || "Box"
 			}
 		}
 	},
