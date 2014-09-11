@@ -19,7 +19,9 @@ define({
 				body : body
 			})
 		})
-		event_circle.add_listener( this.define_listener() )
+		event_circle.add_listener( this.define_listener({
+			body : body
+		}))
 
 		return { 
 			body  : body,
@@ -29,9 +31,28 @@ define({
 
 	define_state : function ( define ) {
 		return {
+			close : { 
+				body : define.provided.box
+			},
 			change : {
-				body  : define.provided.content,
-				title : define.provided.title
+				body      : define.provided.content,
+				title     : define.provided.title,
+				index     : 0,
+				page_body : define.provided.content.children[0],
+				on_page   : define.provided.part_name[0],
+				page_name : define.provided.part_name
+			},
+			submit : {
+				with : this.library.morph.index_loop({
+					subject : define.button,
+					into    : {},
+					else_do : function ( loop ) {
+						if ( loop.indexed.constructor === Object && loop.indexed.type === "submit" ) {
+							loop.into[loop.index] = loop.indexed.with
+						}
+						return loop.into
+					}
+				})
 			}
 		}
 	},
@@ -51,7 +72,7 @@ define({
 				}
 			},
 			{
-				"called"       : "regular button click",
+				"called"       : "submit button click",
 				"that_happens" : [
 					{
 						on : define.body.body,
@@ -59,9 +80,21 @@ define({
 					}
 				],
 				only_if  : function ( heard ) { 
-					return ( heard.event.target.hasAttribute("data-box-button") )
+					return ( heard.event.target.hasAttribute("data-box-button-submit") )
 				}
-			}
+			},
+			{
+				"called"       : "close button click",
+				"that_happens" : [
+					{
+						on : define.body.body,
+						is : [ "click" ]
+					}
+				],
+				only_if  : function ( heard ) { 
+					return ( heard.event.target.hasAttribute("data-box-button-close") )
+				}
+			},
 		]
 	},
 
@@ -69,41 +102,70 @@ define({
 		var self = this
 		return [
 			{
-				for       : "regular button click",
+				for       : "submit button click",
 				that_does : function ( heard ) {
-					var button_name
-					button_name = heard.event.target.getAttribute("data-box-button")
-					heard.state.button[button_name].call( {}, self.create_button_click_object({
-						state  : heard.state,
-						event  : heard.event,
-						name   : button_name
-					}))
+					var button_index, submit_method
+					button_index  = heard.event.target.getAttribute("data-box-button-index")
+					submit_method = heard.state.submit.with[button_index]
+					submit_method({
+						
+					})
+					// heard.state.close.body.parentElement.removeChild( heard.state.close.body )
+
 					return heard 
 				}
 			},
 			{
 				for       : "move button click",
 				that_does : function ( heard ) {
-					var content 
-					content = heard.state.change.body.children
-					
 
-					// var next_page, page_name
+					var content, page_index, direction, previous_button, next_button,
+					current_page_body, previous_page_body
 
-					// page_name = heard.state.page.on
-					// next_page = self.get_index_and_name_of_next_page({
-					// 	with_minus : ( heard.event.target.getAttribute("data-box-change") !== "next" ),
-					// 	name       : heard.change.names,
-					// 	on         : heard.change.on,
-					// })
-					// console.log( page_name )
-					// heard.state.body.children
-					// heard.state.title.textContent = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
-					// heard.state.page.on = next_page.name
-					// heard.state.body.content[page_name].transistor.body.style.display      = "none"
-					// heard.state.body.content[next_page.name].transistor.body.style.display = "block"
-					// heard.state.body.subtitle.body.textContent                             = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
+					direction                = heard.event.target.getAttribute("data-box-button-change")
+					content                  = heard.state.change.body.children
+					previous_button          = define.body.get("previous change button").body
+					next_button              = define.body.get("next change button").body
+					heard.state.change.index = self.get_linear_index_for_page({
+						index     : heard.state.change.index,
+						length    : heard.state.change.page_name.length-1,
+						direction : direction
+					})
+					current_page_body                          = heard.state.change.body.children[heard.state.change.index]
+					heard.state.change.page_body.style.display = "none"
+					current_page_body.style.display            = "block"
+					heard.state.change.page_body               = current_page_body
+					previous_button.style.display              = ( heard.state.change.index === 0 ? "none" : "block" )
+					next_button.style.display                  = ( heard.state.change.index === heard.state.change.page_name.length-1 ? "none" : "blocK" )
+					heard.state.change.on_page                 = heard.state.change.page_name[heard.state.change.index]
+					heard.state.change.title.textContent       = self.convert_option_name_to_regular_name( heard.state.change.on_page )
 
+					return heard
+				}
+			},
+			{ 
+				for       : "move button click",
+				that_does : function ( heard ) {
+					self.library.morph.homomorph({ 
+						object : heard.state.submit.with,
+						with   : function ( member ) {
+							
+							define.body.get("button "+ member.key ).body.style.display = ( 
+								heard.state.change.index === heard.state.change.page_name.length-1 ? 
+									"block" : 
+									"none"
+							)
+
+							return ""
+						}
+					})
+					return heard
+				}
+			},
+			{
+				for       : "close button click",
+				that_does : function ( heard ) {
+					heard.state.close.body.parentElement.removeChild( heard.state.close.body )
 					return heard
 				}
 			}
@@ -118,9 +180,10 @@ define({
 				subject : define.button,
 				else_do : function ( loop ) { 
 					return loop.into.concat(self.define_button({
-						class_name : define.class_name,
-						button     : loop.indexed,
-						provided   : define.provided
+						class_name   : define.class_name,
+						button       : loop.indexed,
+						button_index : loop.index,
+						provided     : define.provided
 					}))
 				}
 			})
@@ -139,31 +202,37 @@ define({
 			return { 
 				"class"                 : define.class_name.close || define.class_name.button,
 				"data-box-button-close" : "true",
-				"text"                  : definition.text || "Close"
+				"text"                  : definition.called || "Close"
 			}
 		}
 
 		if ( definition.type === "next" || definition.type === "previous" ) { 
 			return { 
 				"class"                  : define.class_name.change || define.class_name.button,
+				"mark_as"                : definition.type +" change button",
 				"data-box-button-change" : definition.type,
-				"text"                   : definition.text || definition.type[0].toUpperCase() + definition.type.slice(1)
+				"display"                : ( definition.type === "previous" ? "none" : "block" ),
+				"text"                   : definition.called || definition.type[0].toUpperCase() + definition.type.slice(1)
+			}
+		}
+
+		if ( definition.type === "submit" ) { 
+			return { 
+				"class"                  : define.class_name.submit || define.class_name.button,
+				"data-box-button-submit" : definition.type,
+				"mark_as"                : "button "+ define.button.index,
+				"display"                : ( define.provided.part_name.length > 1 ? "none" : "block" ),
+				"data-box-button-index"  : define.button_index,
+				"text"                   : definition.called || definition.type[0].toUpperCase() + definition.type.slice(1)
 			}
 		}
 	},
 
-	get_index_and_name_of_next_page : function ( get ) {
-		
-		var current_name_index, next_index, default_index, final_index
-
-		current_name_index = get.name.indexOf( get.on )
-		default_index      = ( get.with_minus ? get.name.length-1 : 0 )
-		next_index         = ( get.with_minus ? current_name_index - 1 : current_name_index + 1 )
-		final_index        = ( get.name[next_index] === undefined  ? default_index : next_index )
-		
-		return { 
-			name  : get.name[final_index],
-			index : final_index
+	get_linear_index_for_page : function ( get ) {
+		if ( get.direction === "next" ) {
+			return ( get.index >= get.length ? get.length : get.index + 1 )
+		} else {
+			return ( get.index < 1 ? 0 : get.index -1 )
 		}
 	},
 

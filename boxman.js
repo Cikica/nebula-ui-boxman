@@ -45,77 +45,29 @@ define({
 		button    = this.library.button.make({
 			class_name : { 
 				wrap   : "package_main_regular_wrap",
-				button : "package_main_regular_button"
+				button : "package_main_gray_button",
+				submit : "package_main_regular_button",
 			},
 			provided : {
 				box       : body.body,
-				title     : body.get("box title").body,
-				content   : body.get("box body").body
+				title     : body.get("box subtitle").body,
+				content   : body.get("box body").body,
+				part_name : part_name
 			},
 			button : [
 				"next",
 				"previous",
-				"close",
-				// {
-				// 	called : "Box",
-				// 	with   : function () {},
-				// }
+				// "close",
+				{
+					type    : "submit",
+					with    : function () {
+						console.log(" submit ")
+					},
+				}
 			]
 		})
 
 		button.body.append( body.get("main body").body )
-		// event_circle = Object.create( this.library.event_master ).make({
-		// 	state : {
-		// 		body : {
-		// 			main     : body,
-		// 			subtitle : ( part_name.length > 1 ? body.get("box subtitle") : false ),
-		// 			body     : body.get("box body"),
-		// 			content  : content
-		// 		},
-		// 		button : this.library.morph.index_loop({
-		// 			subject : define.button,
-		// 			into    : {},
-		// 			else_do : function ( loop ) {
-		// 				var button_name
-		// 				button_name            = self.convert_text_to_option_name( loop.indexed.text )
-		// 				loop.into[button_name] = loop.indexed.with
-		// 				return loop.into
-		// 			}
-		// 		}),
-		// 		page   : {
-		// 			on   : part_name[0],
-		// 			name : part_name
-		// 		}
-		// 	},
-		// 	events : [
-		// 		{ 
-		// 			called       : "move button click",
-		// 			that_happens : [
-		// 				{ 
-		// 					on : body.body,
-		// 					is : [ "click" ]
-		// 				}
-		// 			],
-		// 			only_if : function ( heard ) { 
-		// 				return ( heard.event.target.hasAttribute("data-box-change") )
-		// 			}
-		// 		},
-		// 		{
-		// 			called       : "regular button click",
-		// 			that_happens : [
-		// 				{
-		// 					on : body.body,
-		// 					is : [ "click" ]
-		// 				}
-		// 			],
-		// 			only_if  : function ( heard ) { 
-		// 				return ( heard.event.target.hasAttribute("data-box-button") )
-		// 			}
-		// 		}
-		// 	],	
-		// })
-
-		// event_circle.add_listener( this.define_listener() )
 
 		body.append(
 			document.body
