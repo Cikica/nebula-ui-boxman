@@ -3,7 +3,6 @@ define({
 	define : {
 		require : [
 			"morph",
-			"event_master",
 			"eloquent",
 			"transistor",
 			"button"
@@ -13,8 +12,7 @@ define({
 
 	make : function ( define ) {
 
-		var body, self, content, event_circle, 
-		part_name, detail, button
+		var body, self, content, part_name, button
 
 		self      = this
 		part_name = this.library.morph.get_the_keys_of_an_object( define.part )
@@ -25,6 +23,7 @@ define({
 			button     : define.button,
 			part       : define.part,
 		}))
+
 		content   = this.library.morph.homomorph({
 			object : define.part,
 			with   : function ( member ) {
@@ -50,74 +49,39 @@ define({
 			},
 			provided : {
 				box       : body.body,
+				body      : body.get("main body").body,
 				title     : body.get("box subtitle").body,
 				content   : body.get("box body").body,
-				part_name : part_name
+				eloquent  : content,
+				part_name : part_name,
+				make_box  : function ( what ) {
+					return self.make( what )
+				},
+				class_name : define.class_name,
+				extra_box  : define.box || {},
 			},
-			button : [
-				"next",
-				"previous",
-				// "close",
-				{
-					type    : "submit",
-					with    : function () {
-						console.log(" submit ")
-					},
-				}
-			]
+			button : define.button
 		})
 
 		button.body.append( body.get("main body").body )
 
-		body.append(
-			document.body
-		)
-	},
-
-	define_listener : function ( define ) {
-		var self = this
-		return [
-			{
-				for       : "regular button click",
-				that_does : function ( heard ) {
-					var button_name
-					button_name = heard.event.target.getAttribute("data-box-button")
-					heard.state.button[button_name].call( {}, self.create_button_click_object({
-						state  : heard.state,
-						event  : heard.event,
-						name   : button_name
-					}))
-					return heard 
-				}
-			},
-			{
-				for       : "move button click",
-				that_does : function ( heard ) {
-					var next_page, page_name
-					page_name = heard.state.page.on
-					next_page = self.get_index_and_name_of_next_page({
-						with_minus : ( heard.event.target.getAttribute("data-box-change") !== "next" ),
-						name       : heard.state.page.name,
-						on         : heard.state.page.on,
-					})
-					heard.state.page.on = next_page.name
-					heard.state.body.content[page_name].transistor.body.style.display      = "none"
-					heard.state.body.content[next_page.name].transistor.body.style.display = "block"
-					heard.state.body.subtitle.body.textContent                             = "Viewing: "+ self.convert_option_name_to_regular_name( next_page.name )
-					return heard
-				}
+		return { 
+			body  : body,
+			state : function () {
+				return self.get_box_state( content )
 			}
-		]
+		}
 	},
 
 	define_body : function ( define ) { 
 		var definition
 		definition = {
-			"class"    : define.class_name.box.wrap,
-			"position" : "fixed",
-			"top"      : "0px",
-			"z-index"  : "999",
-			"child"    : [
+			"class"              : define.class_name.box.wrap,
+			"position"           : "fixed",
+			"top"                : "0px",
+			"z-index"            : "999",
+			"data-boxman-theman" : "yes the man",
+			"child"              : [
 				{
 					"class"    : define.class_name.box.box_wrap,
 					"mark_as"  : "main body",
@@ -154,71 +118,23 @@ define({
 		return definition
 	},
 
-	create_button_click_object : function ( button ) {
-		var self = this
-		return {
-			close : function () {
-				document.body.removeChild( button.state.body.main.body )
-			},
-			get_state : function () {
-				var option, set
-				set    = {}
-				option = self.library.morph.homomorph({
-					object : button.state.body.content,
-					set    : "array",
-					with   : function ( member ) { 
-						set = self.merge_objects({
-							first  : member.value.get_state().option,
-							second : set
-						})
-						return member.value
-					}
+	get_box_state : function ( eloquent ) { 
+		var option, set, self
+		set    = {}
+		self   = this
+		option = this.library.morph.homomorph({
+			object : eloquent,
+			set    : "array",
+			with   : function ( member ) { 
+				set = self.merge_objects({
+					first  : member.value.get_state().option,
+					second : set
 				})
-				// this aint statless boi, oh no it aint
-				return set
+				return member.value
 			}
-		}
-	},
-
-	define_button : function ( define ) {
-		var number_of_pages, buttons, self
-		self            = this
-		number_of_pages = this.library.morph.get_the_keys_of_an_object( define.part ).length
-		buttons         = [
-			{
-				"class" : define.class_name.box.button.wrap,
-				"child" : []
-			}
-		]
-		if ( number_of_pages > 1 ) {
-			buttons[0].child = buttons[0].child.concat([
-				{
-					"class"           : define.class_name.box.button.regular,
-					"text"            : "Previous Part",
-					"data-box-change" : "previous",
-				},
-				{
-					"class"           : define.class_name.box.button.regular,
-					"text"            : "Next Part",
-					"data-box-change" : "next",
-				}
-			])
-		}
-
-		buttons[0].child = buttons[0].child.concat(this.library.morph.index_loop({
-			subject : define.button,
-			else_do : function ( loop ) {
-				var definition, button_type
-				button_type = loop.indexed.type || "regular"
-				definition  = {
-					"class"           : define.class_name.box.button[button_type],
-					"text"            : loop.indexed.text,
-					"data-box-button" : self.convert_text_to_option_name( loop.indexed.text )
-				}
-				return loop.into.concat( definition )
-			}
-		}))
-		return buttons
+		})
+		// this aint statless boi, oh no it aint
+		return set
 	},
 
 	merge_objects : function ( merge ) {
@@ -250,5 +166,5 @@ define({
 
 	convert_text_to_option_name : function ( text ) { 
 		return text.replace(/\s/g, "_").toLowerCase()
-	},
+	}
 })

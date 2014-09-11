@@ -10,7 +10,9 @@ define({
 	},
 
 	make : function ( define ) {
+		
 		var self, event_circle, body
+
 		body         = this.library.transistor.make( this.define_body( define ) )
 		event_circle = Object.create( this.library.event_master ).make({
 			state  : this.define_state( define ),
@@ -19,8 +21,11 @@ define({
 				body : body
 			})
 		})
+
 		event_circle.add_listener( this.define_listener({
-			body : body
+			body       : body,
+			provided   : define.provided,
+			eloquent   : define.provided.eloquent
 		}))
 
 		return { 
@@ -42,6 +47,22 @@ define({
 				on_page   : define.provided.part_name[0],
 				page_name : define.provided.part_name
 			},
+			buttons_to_reveal : this.library.morph.index_loop({
+				subject : define.button,
+				into    : {},
+				else_do : function ( loop ) {
+
+					if ( loop.indexed.show_on ) { 
+						if ( loop.into.hasOwnProperty( loop.indexed.shown_on ) ) {
+							loop.into[loop.indexed.show_on] = loop.into[loop.indexed.show_on].concat(loop.index)
+						} else { 
+							loop.into[loop.indexed.show_on] = [loop.index]
+						}
+					}
+
+					return loop.into
+				}
+			}),
 			submit : {
 				with : this.library.morph.index_loop({
 					subject : define.button,
@@ -59,6 +80,18 @@ define({
 
 	define_event : function ( define ) {
 		return [
+			{ 
+				"called"       : "box button click",
+				"that_happens" : [
+					{ 
+						on : define.body.body,
+						is : [ "click" ]
+					}
+				],
+				only_if : function ( heard ) {
+					return ( heard.event.target.hasAttribute("data-box-button-box") ) 
+				}
+			},
 			{ 
 				"called"       : "move button click",
 				"that_happens" : [
@@ -100,17 +133,31 @@ define({
 
 	define_listener : function ( define ) {
 		var self = this
+
 		return [
+			{ 
+				for       : "box button click",
+				that_does : function ( heard ) {
+					var box, definition
+					definition                       = define.provided.extra_box.checklist
+					definition.class_name            = define.provided.class_name
+					box                              = define.provided.make_box( definition )
+					define.provided.body.style.right = "5%"
+					box.body.append( document.body )
+
+					return heard
+				}
+			},
 			{
 				for       : "submit button click",
 				that_does : function ( heard ) {
 					var button_index, submit_method
 					button_index  = heard.event.target.getAttribute("data-box-button-index")
 					submit_method = heard.state.submit.with[button_index]
-					submit_method({
-						
-					})
-					// heard.state.close.body.parentElement.removeChild( heard.state.close.body )
+					submit_method(self.create_button_click_object({
+						eloquent : define.eloquent
+					}))
+					heard.state.close.body.parentElement.removeChild( heard.state.close.body )
 
 					return heard 
 				}
@@ -146,11 +193,35 @@ define({
 			{ 
 				for       : "move button click",
 				that_does : function ( heard ) {
-					self.library.morph.homomorph({ 
+
+					self.library.morph.homomorph({
+						object : heard.state.buttons_to_reveal,
+						with   : function ( member ) {
+							if ( member.property_name === heard.state.change.on_page ) { 
+								self.library.morph.index_loop({
+									subject : member.value,
+									else_do : function ( loop ) {
+										define.body.get("button "+ loop.indexed ).body.style.display = "block"
+									}
+								})
+							} else { 
+								self.library.morph.index_loop({
+									subject : member.value,
+									else_do : function ( loop ) {
+										define.body.get("button "+ loop.indexed ).body.style.display = "none"
+									}
+								})
+							}
+
+							return ""
+						}
+					})
+
+					self.library.morph.homomorph({
 						object : heard.state.submit.with,
 						with   : function ( member ) {
-							
-							define.body.get("button "+ member.key ).body.style.display = ( 
+
+							define.body.get("button "+ member.property_name ).body.style.display = ( 
 								heard.state.change.index === heard.state.change.page_name.length-1 ? 
 									"block" : 
 									"none"
@@ -165,7 +236,11 @@ define({
 			{
 				for       : "close button click",
 				that_does : function ( heard ) {
-					heard.state.close.body.parentElement.removeChild( heard.state.close.body )
+					var body = heard.state.close.body 
+					if ( body.previousSibling.hasAttribute("data-boxman-theman") ) {
+						body.previousSibling.firstChild.style.right = "0px"
+					}  
+					body.parentElement.removeChild( heard.state.close.body )
 					return heard
 				}
 			}
@@ -220,10 +295,43 @@ define({
 			return { 
 				"class"                  : define.class_name.submit || define.class_name.button,
 				"data-box-button-submit" : definition.type,
-				"mark_as"                : "button "+ define.button.index,
+				"mark_as"                : "button "+ define.button_index,
 				"display"                : ( define.provided.part_name.length > 1 ? "none" : "block" ),
 				"data-box-button-index"  : define.button_index,
 				"text"                   : definition.called || definition.type[0].toUpperCase() + definition.type.slice(1)
+			}
+		}
+
+		if ( definition.type === "box" ) {
+			return { 
+				"class"                 : define.class_name.box || define.class_name.button,
+				"data-box-button-box"   : define.button_index,
+				"mark_as"               : "button "+ define.button_index,
+				"data-box-button-index" : define.button_index,
+				"text"                  : define.called || "Box"
+			}
+		}
+	},
+
+	create_button_click_object : function ( define ) {
+		var self = this
+		return {
+			get_state : function () {
+				var option, set
+				set    = {}
+				option = self.library.morph.homomorph({
+					object : define.eloquent,
+					set    : "array",
+					with   : function ( member ) { 
+						set = self.merge_objects({
+							first  : member.value.get_state().option,
+							second : set
+						})
+						return member.value
+					}
+				})
+				// this aint statless boi, oh no it aint
+				return set
 			}
 		}
 	},
@@ -246,5 +354,20 @@ define({
 				return loop.into.concat(( loop.indexed[0].toUpperCase() + loop.indexed.slice(1) ))
 			}
 		})
+	},
+
+	merge_objects : function ( merge ) {
+		var second
+		second = this.library.morph.copy({ what : merge.second })
+		this.library.morph.homomorph({ 
+			object  : merge.first,
+			with    : function ( member ) { 
+				if ( !second.hasOwnProperty( member.property_name ) ) { 
+					second[member.property_name] = member.value
+				}
+				return member.value
+			}
+		})
+		return second
 	},
 })
