@@ -152,13 +152,18 @@ define({
 			{
 				for       : "submit button click",
 				that_does : function ( heard ) {
-					var button_index, submit_method
+					var button_index, submit_method, body
+					body          = heard.state.close.body
 					button_index  = heard.event.target.getAttribute("data-box-button-index")
 					submit_method = heard.state.submit.with[button_index]
 					submit_method(self.create_button_click_object({
 						eloquent : define.eloquent
 					}))
-					heard.state.close.body.parentElement.removeChild( heard.state.close.body )
+
+					if ( body.previousSibling.nodeName === "DIV" && body.previousSibling.hasAttribute("data-boxman-theman") ) {
+						body.previousSibling.firstChild.style.right = "0px"
+					}
+					body.parentElement.removeChild( heard.state.close.body )
 
 					return heard 
 				}
@@ -241,7 +246,7 @@ define({
 
 					if ( body.previousSibling.nodeName === "DIV" && body.previousSibling.hasAttribute("data-boxman-theman") ) {
 						body.previousSibling.firstChild.style.right = "0px"
-					}  
+					}
 					body.parentElement.removeChild( heard.state.close.body )
 					return heard
 				}
