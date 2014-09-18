@@ -49,17 +49,22 @@ define({
 				box    : "package_main_regular_button",
 			},
 			provided : {
-				box       : body.body,
-				body      : body.get("main body").body,
-				title     : ( part_name.length < 2 ? {} : body.get("box subtitle").body ),
-				content   : body.get("box body").body,
-				eloquent  : content,
-				part_name : part_name,
-				make_box  : function ( what ) {
+				box           : body.body,
+				body          : body.get("main body").body,
+				title         : ( part_name.length < 2 ? {} : body.get("box subtitle").body ),
+				content       : body.get("box body").body,
+				eloquent      : content,
+				part_name     : part_name,
+				class_name    : define.class_name,
+				extra_box     : define.box || {},
+				body_overflow : ( 
+					document.body.style.overflow.match(/[a-zA-Z]./) ? 
+						document.body.style.overflow : 
+						"auto" 
+				),
+				make_box      : function ( what ) {
 					return self.make( what )
 				},
-				class_name : define.class_name,
-				extra_box  : define.box || {},
 			},
 			button : define.button
 		})

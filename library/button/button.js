@@ -35,9 +35,11 @@ define({
 	},
 
 	define_state : function ( define ) {
+
 		return {
 			close : { 
-				body : define.provided.box
+				body          : define.provided.box,
+				body_overflow : define.provided.body_overflow
 			},
 			change : {
 				body      : define.provided.content,
@@ -242,11 +244,15 @@ define({
 			{
 				for       : "close button click",
 				that_does : function ( heard ) {
-					var body = heard.state.close.body
+
+					var body
+					body = heard.state.close.body
 
 					if ( body.previousSibling.nodeName === "DIV" && body.previousSibling.hasAttribute("data-boxman-theman") ) {
 						body.previousSibling.firstChild.style.right = "0px"
 					}
+					
+					document.body.style.overflow = heard.state.close.body_overflow
 					body.parentElement.removeChild( heard.state.close.body )
 					return heard
 				}
